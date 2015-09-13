@@ -4,7 +4,7 @@
   "description": "Neural Network library in JavaScript",
   "main": "nnjs.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "js tests.js"
   },
   "repository": {
     "type": "git",
