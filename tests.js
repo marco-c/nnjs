@@ -3,6 +3,7 @@
 
 'use strict';
 
+load('testPooling.js');
 load('testNOT.js');
 load('testNOTWithReLU.js');
 load('testNOTTwoLayers.js');
