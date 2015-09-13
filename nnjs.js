@@ -7,16 +7,43 @@ load('rand.js');
 load('util.js');
 
 var Blob = function(width, height, depth) {
+  this.width = width;
+  this.height = height;
+  this.depth = depth;
+
   this.data = new Float64Array(width * height * depth);
   this.delta = new Float64Array(width * height * depth);
 };
 
-var ConvolutionLayer = function(numInput, numOutput, windowSize, stride, pad) {
+var ConvolutionLayer = function(inputWidth, inputHeight, inputDepth, windowSize, stride, pad) {
   this.numInput = numInput;
   this.numOutput = numOutput;
   this.windowSize = windowSize;
   this.stride = stride;
   this.pad = pad;
+
+  this.outputWidth = Math.floor((inputWidth + 2 * pad - windowSize) / stride + 1);
+  this.outputHeight = Math.floor((inputHeight + 2 * pad - windowSize) / stride + 1);
+  this.outputDepth = inputDepth;
+
+  this.blobs = new Array(2);
+  this.biases = this.blobs[0] = new Blob(1, 1, numOutput);
+  this.weights = this.blobs[1] = new Blob(windowSize, windowSize, inputDepth);
+
+  this.params = new Array(2);
+  this.params[0] = {
+    weightDecay: 0,
+  };
+  this.params[1] = {
+    weightDecay: 1,
+  };
+
+  for (var i = 0; i < numOutput; i++) {
+    this.biases.data[i] = Rand.randn(0, 1);
+  }
+  for (var i = 0; i < numOutput * numInput; i++) {
+    this.weights.data[i] = Rand.randn(0, 1.0 / Math.sqrt(numInput));
+  }
 };
 
 ConvolutionLayer.prototype.fprop = function() {
@@ -27,18 +54,63 @@ ConvolutionLayer.prototype.bprop = function() {
 
 };
 
-var PoolingLayer = function(poolingFunc, windowSize, stride) {
+// XXX: Only MaxPooling for now.
+// TODO: Implement pad.
+var PoolingLayer = function(inputWidth, inputHeight, inputDepth, poolingFunc, windowSize, stride, pad) {
   this.poolingFunc = poolingFunc;
   this.windowSize = windowSize;
   this.stride = stride;
+  this.pad = pad;
+
+  this.outputWidth = Math.floor((inputWidth + 2 * pad - windowSize) / stride + 1);
+  this.outputHeight = Math.floor((inputHeight + 2 * pad - windowSize) / stride + 1);
+  this.outputDepth = inputDepth;
+
+  this.inputBlob = null;
+  this.blob = new Blob(this.outputWidth, this.outputHeight, this.outputDepth);
+
+  this.gradMap = Object.create(null);
 }
 
-PoolingLayer.prototype.fprop = function() {
+PoolingLayer.prototype.fprop = function(inputBlob) {
+  this.inputBlob = inputBlob;
 
+  for (var d = 0; d < inputBlob.depth; d++) {
+    for (var startX = 0, outX = 0; startX < inputBlob.width; startX += this.stride, outX++) {
+      for (var startY = 0, outY = 0; startY < inputBlob.height; startY += this.stride, outY++) {
+        var maxIdx = d * inputBlob.width * inputBlob.height + startX * inputBlob.height + startY;
+        var max = inputBlob.data[maxIdx];
+
+        for (var x = startX; x < startX + this.windowSize; x++) {
+          for (var y = startY; y < startY + this.windowSize; y++) {
+            var idx = d * inputBlob.width * inputBlob.height + x * inputBlob.height + y;
+            var val = inputBlob.data[idx];
+            if (val > max) {
+              max = val;
+              maxIdx = idx;
+            }
+          }
+        }
+
+        var outIdx = d * this.outputWidth * this.outputHeight + outX * this.outputHeight + outY;
+        this.blob.data[outIdx] = max;
+        this.gradMap[outIdx] = maxIdx;
+      }
+    }
+  }
+
+  return this.blob;
 };
 
-PoolingLayer.prototype.bprop = function() {
+PoolingLayer.prototype.bprop = function(nextBlob) {
+  this.inputBlob.delta.fill(0);
 
+  for (var i = 0; i < nextBlob.depth * nextBlob.width * nextBlob.height; i++) {
+    this.inputBlob.delta[this.gradMap[i]] += nextBlob.delta[i];
+    delete this.gradMap[i];
+  }
+
+  return this.inputBlob;
 };
 
 var ReLULayer = function(numInput) {
@@ -239,8 +311,6 @@ Trainer.prototype.train = function(trainVectors, trainLabels, testVectors, testL
 // XXX: This only works for classification problems.
 Trainer.prototype.test = function(testVectors, testLabels) {
   var correct = 0;
-
-  var isClassification = Array.isArray(testLabels[0]);
 
   for (var i = 0; i < testVectors.length; i++) {
     if (Util.argmax(this.network.fprop(testVectors[i]).data) === testLabels[i]) {
