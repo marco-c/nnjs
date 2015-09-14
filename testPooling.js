@@ -6,7 +6,7 @@
 load('nnjs.js');
 
 var testPooling = (function() {
-  function test(name, windowSize, stride, data, expected, expectedDelta) {
+  function test(name, windowSize, stride, pad, data, expected, expectedDelta) {
     var depth = data.length;
     var width = data[0].length;
     var height = data[0][0].length;
@@ -20,7 +20,7 @@ var testPooling = (function() {
       }
     }
 
-    var poolingLayer = new PoolingLayer(width, height, depth, null, windowSize, stride, 0);
+    var poolingLayer = new PoolingLayer(width, height, depth, null, windowSize, stride, pad);
     var result = poolingLayer.fprop(blob);
 
     var expectedDepth = expected.length;
@@ -75,7 +75,7 @@ var testPooling = (function() {
     }
   }
 
-  test("4x4x1,window=2x2,stride=2,pad=0", 2, 2,
+  test("4x4x1,window=2x2,stride=2,pad=0", 2, 2, 0,
     [
       [
         [ 0, 1, 2, 3, ],
@@ -100,7 +100,7 @@ var testPooling = (function() {
     ]
   );
 
-  test("4x4x2,window=2x2,stride=2,pad=0", 2, 2,
+  test("4x4x2,window=2x2,stride=2,pad=0", 2, 2, 0,
     [
       [
         [ 0, 1, 2, 3, ],
@@ -141,7 +141,7 @@ var testPooling = (function() {
     ]
   );
 
-  test("5x5x1,window=2x2,stride=3,pad=0", 2, 3,
+  test("5x5x1,window=2x2,stride=3,pad=0", 2, 3, 0,
     [
       [
         [ 0, 1, 2, 3, 4, ],
@@ -168,7 +168,7 @@ var testPooling = (function() {
     ]
   );
 
-  test("5x5x1,window=3x3,stride=2,pad=0", 3, 2,
+  test("5x5x1,window=3x3,stride=2,pad=0", 3, 2, 0,
     [
       [
         [ 0, 1, 2, 3, 4, ],
@@ -191,6 +191,27 @@ var testPooling = (function() {
         [ 4, 0, 4, 0, 0, ],
         [ 0, 0, 0, 0, 0, ],
         [ 0, 0, 0, 0, 0, ]
+      ]
+    ]
+  );
+
+  test("2x2x1,window=2x2,stride=2,pad=1", 2, 2, 1,
+    [
+      [
+        [ 5, 6, ],
+        [ 9, 0, ],
+      ]
+    ],
+    [
+      [
+        [ 5, 6, ],
+        [ 9, 0, ],
+      ]
+    ],
+    [
+      [
+        [ 1, 2, ],
+        [ 3, 4, ],
       ]
     ]
   );
