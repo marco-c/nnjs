@@ -55,7 +55,6 @@ ConvolutionLayer.prototype.bprop = function() {
 };
 
 // XXX: Only MaxPooling for now.
-// TODO: Implement pad.
 var PoolingLayer = function(inputWidth, inputHeight, inputDepth, poolingFunc, windowSize, stride, pad) {
   this.poolingFunc = poolingFunc;
   this.windowSize = windowSize;
@@ -76,18 +75,20 @@ PoolingLayer.prototype.fprop = function(inputBlob) {
   this.inputBlob = inputBlob;
 
   for (var d = 0; d < inputBlob.depth; d++) {
-    for (var startX = 0, outX = 0; startX < inputBlob.width; startX += this.stride, outX++) {
-      for (var startY = 0, outY = 0; startY < inputBlob.height; startY += this.stride, outY++) {
-        var maxIdx = d * inputBlob.width * inputBlob.height + startX * inputBlob.height + startY;
-        var max = inputBlob.data[maxIdx];
+    for (var startX = -this.pad, outX = 0; outX < this.outputWidth; startX += this.stride, outX++) {
+      for (var startY = -this.pad, outY = 0; outY < this.outputHeight; startY += this.stride, outY++) {
+        var maxIdx = -1;
+        var max = Number.NEGATIVE_INFINITY;
 
         for (var x = startX; x < startX + this.windowSize; x++) {
           for (var y = startY; y < startY + this.windowSize; y++) {
-            var idx = d * inputBlob.width * inputBlob.height + x * inputBlob.height + y;
-            var val = inputBlob.data[idx];
-            if (val > max) {
-              max = val;
-              maxIdx = idx;
+            if (x >= 0 && x < inputBlob.width && y >= 0 && y < inputBlob.height) {
+              var idx = d * inputBlob.width * inputBlob.height + x * inputBlob.height + y;
+              var val = inputBlob.data[idx];
+              if (val > max) {
+                max = val;
+                maxIdx = idx;
+              }
             }
           }
         }
