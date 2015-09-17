@@ -6,29 +6,28 @@
 load('rand.js');
 load('util.js');
 
-var Blob = function(width, height, depth) {
+var Blob = function(width, height, depth, num=1) {
   this.width = width;
   this.height = height;
   this.depth = depth;
+  this.num = num;
 
-  this.data = new Float64Array(width * height * depth);
-  this.delta = new Float64Array(width * height * depth);
+  this.data = new Float64Array(width * height * depth * num);
+  this.delta = new Float64Array(width * height * depth * num);
 };
 
-var ConvolutionLayer = function(inputWidth, inputHeight, inputDepth, windowSize, stride, pad) {
-  this.numInput = numInput;
-  this.numOutput = numOutput;
+var ConvolutionLayer = function(inputWidth, inputHeight, inputDepth, outputDepth, windowSize, stride, pad) {
   this.windowSize = windowSize;
   this.stride = stride;
   this.pad = pad;
 
   this.outputWidth = Math.floor((inputWidth + 2 * pad - windowSize) / stride + 1);
   this.outputHeight = Math.floor((inputHeight + 2 * pad - windowSize) / stride + 1);
-  this.outputDepth = inputDepth;
+  this.outputDepth = outputDepth;
 
   this.blobs = new Array(2);
-  this.biases = this.blobs[0] = new Blob(1, 1, numOutput);
-  this.weights = this.blobs[1] = new Blob(windowSize, windowSize, inputDepth);
+  this.biases = this.blobs[0] = new Blob(1, 1, outputDepth);
+  this.weights = this.blobs[1] = new Blob(windowSize, windowSize, inputDepth, outputDepth);
 
   this.params = new Array(2);
   this.params[0] = {
@@ -38,20 +37,78 @@ var ConvolutionLayer = function(inputWidth, inputHeight, inputDepth, windowSize,
     weightDecay: 1,
   };
 
-  for (var i = 0; i < numOutput; i++) {
+  for (var i = 0; i < outputDepth; i++) {
     this.biases.data[i] = Rand.randn(0, 1);
   }
-  for (var i = 0; i < numOutput * numInput; i++) {
-    this.weights.data[i] = Rand.randn(0, 1.0 / Math.sqrt(numInput));
+  for (var i = 0; i < windowSize * windowSize * inputDepth * outputDepth; i++) {
+    this.weights.data[i] = Rand.randn(0, 1.0 / Math.sqrt(windowSize * windowSize * inputDepth));
   }
+
+  this.inputBlob = null;
+  this.blob = new Blob(this.outputWidth, this.outputHeight, this.outputDepth);
 };
 
-ConvolutionLayer.prototype.fprop = function() {
+ConvolutionLayer.prototype.fprop = function(inputBlob) {
+  this.inputBlob = inputBlob;
 
+  for (var d = 0; d < this.outputDepth; d++) {
+    for (var startX = -this.pad, outX = 0; outX < this.outputWidth; startX += this.stride, outX++) {
+      for (var startY = -this.pad, outY = 0; outY < this.outputHeight; startY += this.stride, outY++) {
+        var val = 0;
+
+        for (var x = startX; x < startX + this.windowSize; x++) {
+          for (var y = startY; y < startY + this.windowSize; y++) {
+            if (x >= 0 && x < inputBlob.width && y >= 0 && y < inputBlob.height) {
+              for (var id = 0; id < inputBlob.depth; id++) {
+                val += this.weights.data[d * this.weights.depth * this.weights.width * this.weights.height +
+                                         id * this.weights.width * this.weights.height +
+                                         (x - startX) * this.weights.height +
+                                         (y - startY)] *
+                       inputBlob.data[id * inputBlob.width * inputBlob.height + x * inputBlob.height + y];
+              }
+            }
+          }
+        }
+
+        val += this.biases.data[d];
+        this.blob.data[d * this.outputWidth * this.outputHeight + outX * this.outputHeight + outY] = val;
+      }
+    }
+  }
+
+  return this.blob;
 };
 
-ConvolutionLayer.prototype.bprop = function() {
+ConvolutionLayer.prototype.bprop = function(nextBlob) {
+  for (var d = 0; d < this.outputDepth; d++) {
+    for (var startX = -this.pad, outX = 0; outX < this.outputWidth; startX += this.stride, outX++) {
+      for (var startY = -this.pad, outY = 0; outY < this.outputHeight; startY += this.stride, outY++) {
+        var outputIdx = d * this.outputWidth * this.outputHeight + outX * this.outputHeight + outY;
 
+        for (var x = startX; x < startX + this.windowSize; x++) {
+          for (var y = startY; y < startY + this.windowSize; y++) {
+            if (x >= 0 && x < this.inputBlob.width && y >= 0 && y < this.inputBlob.height) {
+              for (var id = 0; id < this.inputBlob.depth; id++) {
+                var weightIdx = d * this.weights.depth * this.weights.width * this.weights.height +
+                                id * this.weights.width * this.weights.height +
+                                (x - startX) * this.weights.height +
+                                (y - startY);
+                var inputIdx = id * this.inputBlob.width * this.inputBlob.height + x * this.inputBlob.height + y;
+
+
+                this.weights.delta[weightIdx] += this.inputBlob.data[inputIdx] * nextBlob.delta[outputIdx];
+                this.inputBlob.delta[inputIdx] += this.weights.data[weightIdx] * nextBlob.delta[outputIdx];
+              }
+            }
+          }
+        }
+
+        this.blob.delta[outputIdx] += nextBlob.delta[outputIdx];
+      }
+    }
+  }
+
+  return this.inputBlob;
 };
 
 // XXX: Only MaxPooling for now.
@@ -242,7 +299,11 @@ function Network(layers) {
 }
 
 Network.prototype.fprop = function(input) {
-  var x = new Blob(1, 1, input.length);
+  /*var x = new Blob(1, 1, input.length);
+  for (var i = 0; i < input.length; i++) {
+    x.data[i] = input[i];
+  }*/
+  var x = new Blob(28, 28, 1);
   for (var i = 0; i < input.length; i++) {
     x.data[i] = input[i];
   }
@@ -258,6 +319,7 @@ Network.prototype.bprop = function(y) {
   for (var i = this.layers.length - 1; i >= 0; i--) {
     grad = this.layers[i].bprop(grad);
   }
+  return grad;
 }
 
 function Trainer(network, iterations, batchSize, learningRate, weightDecay) {
