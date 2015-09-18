@@ -18,7 +18,7 @@ var testMNIST = (function() {
     new SigmoidLayer(30),
     new LinearLayer(30, 10),
     new SigmoidLayer(10),
-    new RegressionLayer(10),
+    new SoftmaxLayer(10),
   ]);
 
   var trainer = new Trainer(network, 30 * trainImages.length, 1, 0.1, 0.0005);
