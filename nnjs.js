@@ -275,6 +275,8 @@ var RegressionLayer = function(numInput) {
   this.numOutput = numInput;
 
   this.inputBlob = null;
+
+  this.loss = 0;
 }
 
 RegressionLayer.prototype.fprop = function(inputBlob) {
@@ -283,13 +285,60 @@ RegressionLayer.prototype.fprop = function(inputBlob) {
 }
 
 RegressionLayer.prototype.bprop = function(y) {
+  this.loss = 0;
+
   if (Array.isArray(y)) {
     for (var i = 0; i < this.numOutput; i++) {
       this.inputBlob.delta[i] = this.inputBlob.data[i] - y[i];
+      this.loss += 0.5 * this.inputBlob.delta[i] * this.inputBlob.delta[i];
     }
   } else {
     this.inputBlob.delta[0] = this.inputBlob.data[0] - y;
+    this.loss += 0.5 * this.inputBlob.delta[0] * this.inputBlob.delta[0];
   }
+
+  return this.inputBlob;
+}
+
+var SoftmaxLayer = function(numInput) {
+  this.numInput = numInput;
+  this.numOutput = numInput;
+
+  this.inputBlob = null;
+  this.blob = new Blob(1, 1, numInput);
+
+  this.loss = 0;
+}
+
+SoftmaxLayer.prototype.fprop = function(inputBlob) {
+  this.inputBlob = inputBlob;
+
+  var max = inputBlob.data[0];
+  for (var i = 1; i < this.numInput; i++) {
+    if (max < inputBlob.data[i]) {
+      max = inputBlob.data[i];
+    }
+  }
+
+  var expSum = 0;
+  for (var i = 0; i < this.numInput; i++) {
+    this.blob.data[i] = Math.exp(inputBlob.data[i] - max);
+    expSum += this.blob.data[i];
+  }
+
+  for (var i = 0; i < this.numInput; i++) {
+    this.blob.data[i] = this.blob.data[i] / expSum;
+  }
+
+  return this.blob;
+}
+
+SoftmaxLayer.prototype.bprop = function(y) {
+  for (var i = 0; i < this.numOutput; i++) {
+    this.inputBlob.delta[i] = this.blob.data[i] - (i === y ? 1.0 : 0.0);
+  }
+
+  this.loss = -Math.log(this.blob.data[y]);
 
   return this.inputBlob;
 }
@@ -334,9 +383,9 @@ Trainer.prototype.train = function(trainVectors, trainLabels, testVectors, testL
   var inputLen = trainVectors[0].length;
 
   for (var n = 0; n < this.iterations; n++) {
-    /*if (n % 500 === 0) {
+    if (n % 500 === 0) {
       console.log("n: " + n);
-    }*/
+    }
 
     var dataIdx = n % trainVectors.length;
 
