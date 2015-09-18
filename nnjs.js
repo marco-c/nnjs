@@ -375,7 +375,7 @@ Network.prototype.bprop = function(y) {
   return grad;
 }
 
-function Trainer(network, iterations, batchSize, learningRate, weightDecay=0.0, displayIterations=0, testIterations=0) {
+function Trainer(network, iterations, batchSize, learningRate, weightDecay=0.0, momentum=null, displayIterations=0, testIterations=0) {
   this.network = network;
   this.iterations = iterations;
   this.batchSize = batchSize;
@@ -383,6 +383,24 @@ function Trainer(network, iterations, batchSize, learningRate, weightDecay=0.0, 
   this.weightDecay = weightDecay;
   this.displayIterations = displayIterations;
   this.testIterations = testIterations;
+  this.momentum = momentum;
+
+  if (this.momentum) {
+    this.v = new Array(this.network.layers.length);
+
+    for (var i = 0; i < this.network.layers.length; i++) {
+      var layer = this.network.layers[i];
+      if (layer.blobs) {
+        this.v[i] = new Array(layer.blobs.length);
+
+        for (var j = 0; j < layer.blobs.length; j++) {
+          var blob = layer.blobs[j];
+
+          this.v[i][j] = new Blob(1, 1, blob.delta.length);
+        }
+      }
+    }
+  }
 }
 
 Trainer.prototype.train = function(trainVectors, trainLabels, testVectors, testLabels) {
@@ -418,7 +436,12 @@ Trainer.prototype.train = function(trainVectors, trainLabels, testVectors, testL
 
             for (var k = 0; k < blob.delta.length; k++) {
               var grad = blob.delta[k] + param.weightDecay * this.weightDecay * blob.data[k];
-              blob.data[k] -= this.learningRate * grad;
+              var upd = - this.learningRate * grad;
+              if (this.momentum) {
+                upd += this.momentum * this.v[i][j].data[k];
+                this.v[i][j].data[k] = upd;
+              }
+              blob.data[k] += upd;
             }
 
             blob.delta.fill(0);
