@@ -80,6 +80,8 @@ ConvolutionLayer.prototype.fprop = function(inputBlob) {
 };
 
 ConvolutionLayer.prototype.bprop = function(nextBlob) {
+  this.inputBlob.delta.fill(0);
+
   for (var d = 0; d < this.outputDepth; d++) {
     for (var startX = -this.pad, outX = 0; outX < this.outputWidth; startX += this.stride, outX++) {
       for (var startY = -this.pad, outY = 0; outY < this.outputHeight; startY += this.stride, outY++) {
@@ -256,6 +258,8 @@ LinearLayer.prototype.fprop = function(inputBlob) {
 }
 
 LinearLayer.prototype.bprop = function(nextBlob) {
+  this.inputBlob.delta.fill(0);
+
   for (var i = 0; i < this.numOutput; i++) {
     this.biases.delta[i] += nextBlob.delta[i];
   }
