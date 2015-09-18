@@ -382,9 +382,12 @@ function Trainer(network, iterations, batchSize, learningRate, weightDecay) {
 Trainer.prototype.train = function(trainVectors, trainLabels, testVectors, testLabels) {
   var inputLen = trainVectors[0].length;
 
+  var lossArr = new Array(500);
+
   for (var n = 0; n < this.iterations; n++) {
     if (n % 500 === 0) {
       console.log("n: " + n);
+      console.log("Loss: " + lossArr.reduce((prev, cur) => prev + cur, 0) / lossArr.length);
     }
 
     var dataIdx = n % trainVectors.length;
@@ -417,6 +420,8 @@ Trainer.prototype.train = function(trainVectors, trainLabels, testVectors, testL
         }
       }
     }
+
+    lossArr[n % 500] = this.network.layers[this.network.layers.length - 1].loss;
   }
 };
 
