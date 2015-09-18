@@ -11,6 +11,7 @@ load('testOR.js');
 load('testORTwoLayers.js');
 load('testAND.js');
 load('testXOR.js');
+load('testXORWithMomentum.js');
 load('testVectorNOT.js');
 load('testIRIS.js');
 load('testMNIST.js');

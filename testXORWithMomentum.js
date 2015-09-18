@@ -5,7 +5,7 @@
 
 load('nnjs.js');
 
-var testXOR = (function() {
+var testXORWithMomentum = (function() {
   var data = [
     { x: [0, 0], y: 0 },
     { x: [0, 1], y: 1 },
@@ -28,18 +28,18 @@ var testXOR = (function() {
   trainer.train(trainVectors, trainLabels);
 
   if (Math.round(network.fprop([0, 0]).data[0]) !== 0) {
-    console.log("FAIL - 0 XOR 0");
+    console.log("FAIL - 0 XORWithMomentum 0");
   }
 
   if (Math.round(network.fprop([0, 1]).data[0]) !== 1) {
-    console.log("FAIL - 0 XOR 1");
+    console.log("FAIL - 0 XORWithMomentum 1");
   }
 
   if (Math.round(network.fprop([1, 0]).data[0]) !== 1) {
-    console.log("FAIL - 1 XOR 0");
+    console.log("FAIL - 1 XORWithMomentum 0");
   }
 
   if (Math.round(network.fprop([1, 1]).data[0]) !== 0) {
-    console.log("FAIL - 1 XOR 1");
+    console.log("FAIL - 1 XORWithMomentum 1");
   }
 })();
