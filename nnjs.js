@@ -375,21 +375,22 @@ Network.prototype.bprop = function(y) {
   return grad;
 }
 
-function Trainer(network, iterations, batchSize, learningRate, weightDecay) {
+function Trainer(network, iterations, batchSize, learningRate, weightDecay=0.0, displayIterations=20) {
   this.network = network;
   this.iterations = iterations;
   this.batchSize = batchSize;
   this.learningRate = learningRate;
-  this.weightDecay = weightDecay || 0.0;
+  this.weightDecay = weightDecay;
+  this.displayIterations = displayIterations;
 }
 
 Trainer.prototype.train = function(trainVectors, trainLabels, testVectors, testLabels) {
   var inputLen = trainVectors[0].length;
 
-  var lossArr = new Array(500);
+  var lossArr = new Array(this.displayIterations);
 
   for (var n = 0; n < this.iterations; n++) {
-    if (n % 500 === 0) {
+    if (n % this.displayIterations === 0) {
       console.log("n: " + n);
       console.log("Loss: " + lossArr.reduce((prev, cur) => prev + cur, 0) / lossArr.length);
     }
@@ -425,7 +426,7 @@ Trainer.prototype.train = function(trainVectors, trainLabels, testVectors, testL
       }
     }
 
-    lossArr[n % 500] = this.network.layers[this.network.layers.length - 1].loss;
+    lossArr[n % this.displayIterations] = this.network.layers[this.network.layers.length - 1].loss;
   }
 };
 
