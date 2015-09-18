@@ -375,7 +375,7 @@ Network.prototype.bprop = function(y) {
   return grad;
 }
 
-function Trainer(network, iterations, batchSize, learningRate, weightDecay=0.0, displayIterations=20) {
+function Trainer(network, iterations, batchSize, learningRate, weightDecay=0.0, displayIterations=0) {
   this.network = network;
   this.iterations = iterations;
   this.batchSize = batchSize;
@@ -390,7 +390,7 @@ Trainer.prototype.train = function(trainVectors, trainLabels, testVectors, testL
   var lossArr = new Array(this.displayIterations);
 
   for (var n = 0; n < this.iterations; n++) {
-    if (n % this.displayIterations === 0) {
+    if (this.displayIterations && n % this.displayIterations === 0) {
       console.log("n: " + n);
       console.log("Loss: " + lossArr.reduce((prev, cur) => prev + cur, 0) / lossArr.length);
     }
