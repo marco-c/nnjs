@@ -177,22 +177,19 @@ PoolingLayer.prototype.bprop = function(nextBlob) {
   return this.inputBlob;
 };
 
-var ReLULayer = function(numInput) {
-  this.numInput = numInput;
-  this.numOutput = numInput;
-
-  this.blob = new Blob(1, 1, numInput);
+var ReLULayer = function(inputWidth, inputHeight=1, inputDepth=1) {
+  this.blob = new Blob(inputWidth, inputHeight, inputDepth);
 };
 
 ReLULayer.prototype.fprop = function(inputBlob) {
-  for (var i = 0; i < this.numInput; i++) {
+  for (var i = 0; i < this.blob.data.length; i++) {
     this.blob.data[i] = inputBlob.data[i] >= 0 ? inputBlob.data[i] : 0;
   }
   return this.blob;
 };
 
 ReLULayer.prototype.bprop = function(nextBlob) {
-  for (var i = 0; i < this.numInput; i++) {
+  for (var i = 0; i < this.blob.data.length; i++) {
     this.blob.delta[i] = this.blob.data[i] > 0 ? nextBlob.delta[i] : 0;
   }
   return this.blob;
