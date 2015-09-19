@@ -3,15 +3,20 @@
 
 'use strict';
 
-load('testPooling.js');
-load('testNOT.js');
-load('testNOTWithReLU.js');
-load('testNOTTwoLayers.js');
-load('testOR.js');
-load('testORTwoLayers.js');
-load('testAND.js');
-load('testXOR.js');
-load('testXORWithMomentum.js');
-load('testVectorNOT.js');
-load('testIRIS.js');
-load('testMNIST.js');
+function test(name) {
+  console.log(name);
+  load(name + '.js');
+}
+
+test('testPooling');
+test('testNOT');
+test('testNOTWithReLU');
+test('testNOTTwoLayers');
+test('testOR');
+test('testORTwoLayers');
+test('testAND');
+test('testXOR');
+test('testXORWithMomentum');
+test('testVectorNOT');
+test('testIRIS');
+test('testMNIST');
