@@ -21,3 +21,4 @@ test('testXORWithMomentum');
 test('testVectorNOT');
 test('testIRIS');
 test('testMNIST');
+test('testMNISTWithCNN');
