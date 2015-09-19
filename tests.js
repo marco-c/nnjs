@@ -9,6 +9,7 @@ function test(name) {
 }
 
 test('testPooling');
+test('testConvolution');
 test('testNOT');
 test('testNOTWithReLU');
 test('testNOTTwoLayers');
