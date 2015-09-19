@@ -16,7 +16,7 @@ var Blob = function(width, height, depth, num=1) {
   this.delta = new Float64Array(width * height * depth * num);
 };
 
-var ConvolutionLayer = function(inputWidth, inputHeight, inputDepth, outputDepth, windowSize, stride, pad) {
+var ConvolutionLayer = function(inputWidth, inputHeight, inputDepth, outputDepth, windowSize, stride, pad, biasFiller) {
   this.windowSize = windowSize;
   this.stride = stride;
   this.pad = pad;
@@ -38,7 +38,11 @@ var ConvolutionLayer = function(inputWidth, inputHeight, inputDepth, outputDepth
   };
 
   for (var i = 0; i < outputDepth; i++) {
-    this.biases.data[i] = Rand.randn(0, 1);
+    if (biasFiller) {
+      this.biases.data[i] = biasFiller();
+    } else {
+      this.biases.data[i] = Rand.randn(0, 1);
+    }
   }
   for (var i = 0; i < windowSize * windowSize * inputDepth * outputDepth; i++) {
     this.weights.data[i] = Rand.randn(0, 1.0 / Math.sqrt(windowSize * windowSize * inputDepth));
@@ -215,7 +219,7 @@ SigmoidLayer.prototype.bprop = function(nextBlob) {
   return this.blob;
 };
 
-var LinearLayer = function(numInput, numOutput) {
+var LinearLayer = function(numInput, numOutput, biasFiller) {
   this.numInput = numInput;
   this.numOutput = numOutput;
 
@@ -232,7 +236,11 @@ var LinearLayer = function(numInput, numOutput) {
   };
 
   for (var i = 0; i < numOutput; i++) {
-    this.biases.data[i] = Rand.randn(0, 1);
+    if (biasFiller) {
+      this.biases.data[i] = biasFiller();
+    } else {
+      this.biases.data[i] = Rand.randn(0, 1);
+    }
   }
   for (var i = 0; i < numOutput * numInput; i++) {
     this.weights.data[i] = Rand.randn(0, 1.0 / Math.sqrt(numInput));
