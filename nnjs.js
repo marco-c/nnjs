@@ -105,7 +105,7 @@ ConvolutionLayer.prototype.bprop = function(nextBlob) {
           }
         }
 
-        this.blob.delta[outputIdx] += nextBlob.delta[outputIdx];
+        this.biases.delta[outputIdx] += nextBlob.delta[outputIdx];
       }
     }
   }
