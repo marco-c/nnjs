@@ -435,7 +435,7 @@ Trainer.prototype.train = function(trainVectors, trainLabels, testVectors, testL
             var param = layer.params[j];
 
             for (var k = 0; k < blob.delta.length; k++) {
-              var grad = blob.delta[k] + param.weightDecay * this.weightDecay * blob.data[k];
+              var grad = (blob.delta[k] + param.weightDecay * this.weightDecay * blob.data[k]) / this.batchSize;
               var upd = - this.learningRate * grad;
               if (this.momentum) {
                 upd += this.momentum * this.v[i][j].data[k];
