@@ -24,7 +24,7 @@ var testXOR = (function() {
     new RegressionLayer(1),
   ]);
 
-  var trainer = new Trainer(network, 40000, 4, 0.1, 0.0001);
+  var trainer = new Trainer(network, 40000, 1, 0.1, 0.0001);
   trainer.train(trainVectors, trainLabels);
 
   if (Math.round(network.fprop([0, 0]).data[0]) !== 0) {

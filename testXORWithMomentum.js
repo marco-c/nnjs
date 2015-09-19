@@ -24,7 +24,7 @@ var testXORWithMomentum = (function() {
     new RegressionLayer(1),
   ]);
 
-  var trainer = new Trainer(network, 4000, 4, 0.1, 0.0001, 0.9);
+  var trainer = new Trainer(network, 4000, 1, 0.1, 0.0001, 0.9);
   trainer.train(trainVectors, trainLabels);
 
   if (Math.round(network.fprop([0, 0]).data[0]) !== 0) {

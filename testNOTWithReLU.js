@@ -20,7 +20,7 @@ var testNOTWithReLU = (function() {
     new RegressionLayer(1),
   ]);
 
-  var trainer = new Trainer(network, 1000, 1, 0.1);
+  var trainer = new Trainer(network, 2000, 1, 0.1);
   trainer.train(trainVectors, trainLabels);
 
   if (Math.round(network.fprop([0]).data[0]) !== 1) {

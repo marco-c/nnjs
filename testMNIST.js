@@ -21,16 +21,9 @@ var testMNIST = (function() {
     new SoftmaxLayer(10),
   ]);
 
-  var trainer = new Trainer(network, 30 * trainImages.length, 1, 0.1, 0.0005);
-  trainer.train(trainImages, trainLabels, testImages, testLabels);
+  var trainer = new Trainer(network, trainImages.length, 1, 0.1, 0.0005, 0.0, 100);
+  trainer.train(trainImages, trainLabels);
 
-  console.log(network.fprop(testImages[0]));
-  console.log(Util.argmax(network.fprop(testImages[0]).data));
-  console.log(testLabels[0]);
-  console.log(network.fprop(testImages[1]));
-  console.log(Util.argmax(network.fprop(testImages[1]).data));
-  console.log(testLabels[1]);
-  console.log(network.fprop(testImages[2]));
-  console.log(Util.argmax(network.fprop(testImages[2]).data));
-  console.log(testLabels[2]);
+  var accuracy = trainer.test(testImages, testLabels);
+  console.log("Accuracy: " + accuracy);
 })();
