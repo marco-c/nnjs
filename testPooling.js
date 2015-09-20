@@ -20,7 +20,8 @@ var testPooling = (function() {
       }
     }
 
-    var poolingLayer = new PoolingLayer(width, height, depth, null, windowSize, stride, pad);
+    var poolingLayer = new PoolingLayer(null, windowSize, stride, pad);
+    poolingLayer.init(width, height, depth);
     var result = poolingLayer.fprop(blob);
 
     var expectedDepth = expected.length;

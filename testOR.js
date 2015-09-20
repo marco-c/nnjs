@@ -17,10 +17,10 @@ var testOR = (function() {
   var trainLabels = data.map(val => val.y);
 
   var network = new Network([
-    new LinearLayer(2, 1),
-    new SigmoidLayer(1),
-    new RegressionLayer(1),
-  ]);
+    new LinearLayer(1),
+    new SigmoidLayer(),
+    new RegressionLayer(),
+  ], 1, 1, 2);
 
   var trainer = new Trainer(network, 4000, 1, 0.1);
   trainer.train(trainVectors, trainLabels);

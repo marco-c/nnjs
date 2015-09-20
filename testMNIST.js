@@ -12,14 +12,14 @@ var testMNIST = (function() {
   load("data/mnist/mnist_test_labels.js");
 
   var network = new Network([
-    new LinearLayer(784, 784),
-    new SigmoidLayer(784),
-    new LinearLayer(784, 30),
-    new SigmoidLayer(30),
-    new LinearLayer(30, 10),
-    new SigmoidLayer(10),
-    new SoftmaxLayer(10),
-  ]);
+    new LinearLayer(784),
+    new SigmoidLayer(),
+    new LinearLayer(30),
+    new SigmoidLayer(),
+    new LinearLayer(10),
+    new SigmoidLayer(),
+    new SoftmaxLayer(),
+  ], 1, 1, 784);
 
   var trainer = new Trainer(network, trainImages.length, 1, 0.1, 0.0005, 0.0, 100);
   trainer.train(trainImages, trainLabels);

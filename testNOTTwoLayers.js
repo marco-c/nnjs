@@ -15,12 +15,12 @@ var testNOTTwoLayers = (function() {
   var trainLabels = data.map(val => val.y);
 
   var network = new Network([
-    new LinearLayer(1, 1),
-    new SigmoidLayer(1),
-    new LinearLayer(1, 1),
-    new SigmoidLayer(1),
-    new RegressionLayer(1),
-  ]);
+    new LinearLayer(1),
+    new SigmoidLayer(),
+    new LinearLayer(1),
+    new SigmoidLayer(),
+    new RegressionLayer(),
+  ], 1, 1, 1);
 
   var trainer = new Trainer(network, 10000, 1, 0.1);
   trainer.train(trainVectors, trainLabels);

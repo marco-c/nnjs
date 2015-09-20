@@ -17,12 +17,12 @@ var testVectorNOT = (function() {
   var trainLabels = data.map(val => val.y);
 
   var network = new Network([
-    new LinearLayer(2, 2),
-    new SigmoidLayer(2),
-    new LinearLayer(2, 2),
-    new SigmoidLayer(2),
-    new RegressionLayer(2),
-  ]);
+    new LinearLayer(2),
+    new SigmoidLayer(),
+    new LinearLayer(2),
+    new SigmoidLayer(),
+    new RegressionLayer(),
+  ], 1, 1, 2);
 
   var trainer = new Trainer(network, 40000, 1, 0.1, 0.0005);
   trainer.train(trainVectors, trainLabels);

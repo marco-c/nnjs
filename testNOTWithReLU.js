@@ -15,10 +15,10 @@ var testNOTWithReLU = (function() {
   var trainLabels = data.map(val => val.y);
 
   var network = new Network([
-    new LinearLayer(1, 1),
-    new ReLULayer(1),
-    new RegressionLayer(1),
-  ]);
+    new LinearLayer(1),
+    new ReLULayer(),
+    new RegressionLayer(),
+  ], 1, 1, 1);
 
   var trainer = new Trainer(network, 2000, 1, 0.1);
   trainer.train(trainVectors, trainLabels);

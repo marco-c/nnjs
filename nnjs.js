@@ -16,18 +16,23 @@ var Blob = function(width, height, depth, num=1) {
   this.delta = new Float64Array(width * height * depth * num);
 };
 
-var ConvolutionLayer = function(inputWidth, inputHeight, inputDepth, outputDepth, windowSize, stride, pad, biasFiller) {
+var ConvolutionLayer = function(outputDepth, windowSize, stride, pad, biasFiller) {
+  this.outputDepth = outputDepth;
   this.windowSize = windowSize;
   this.stride = stride;
   this.pad = pad;
+  this.biasFiller = biasFiller;
 
-  this.outputWidth = Math.floor((inputWidth + 2 * pad - windowSize) / stride + 1);
-  this.outputHeight = Math.floor((inputHeight + 2 * pad - windowSize) / stride + 1);
-  this.outputDepth = outputDepth;
+  this.inputBlob = null;
+};
+
+ConvolutionLayer.prototype.init = function(inputWidth, inputHeight, inputDepth) {
+  this.outputWidth = Math.floor((inputWidth + 2 * this.pad - this.windowSize) / this.stride + 1);
+  this.outputHeight = Math.floor((inputHeight + 2 * this.pad - this.windowSize) / this.stride + 1);
 
   this.blobs = new Array(2);
-  this.biases = this.blobs[0] = new Blob(1, 1, outputDepth);
-  this.weights = this.blobs[1] = new Blob(windowSize, windowSize, inputDepth, outputDepth);
+  this.biases = this.blobs[0] = new Blob(1, 1, this.outputDepth);
+  this.weights = this.blobs[1] = new Blob(this.windowSize, this.windowSize, inputDepth, this.outputDepth);
 
   this.params = new Array(2);
   this.params[0] = {
@@ -37,18 +42,18 @@ var ConvolutionLayer = function(inputWidth, inputHeight, inputDepth, outputDepth
     weightDecay: 1,
   };
 
-  for (var i = 0; i < outputDepth; i++) {
-    if (biasFiller) {
-      this.biases.data[i] = biasFiller();
+  for (var i = 0; i < this.outputDepth; i++) {
+    if (this.biasFiller) {
+      this.biases.data[i] = this.biasFiller();
     } else {
       this.biases.data[i] = Rand.randn(0, 1);
     }
   }
-  for (var i = 0; i < windowSize * windowSize * inputDepth * outputDepth; i++) {
-    this.weights.data[i] = Rand.randn(0, 1.0 / Math.sqrt(windowSize * windowSize * inputDepth));
+
+  for (var i = 0; i < this.windowSize * this.windowSize * inputDepth * this.outputDepth; i++) {
+    this.weights.data[i] = Rand.randn(0, 1.0 / Math.sqrt(this.windowSize * this.windowSize * inputDepth));
   }
 
-  this.inputBlob = null;
   this.blob = new Blob(this.outputWidth, this.outputHeight, this.outputDepth);
 };
 
@@ -118,21 +123,23 @@ ConvolutionLayer.prototype.bprop = function(nextBlob) {
 };
 
 // XXX: Only MaxPooling for now.
-var PoolingLayer = function(inputWidth, inputHeight, inputDepth, poolingFunc, windowSize, stride, pad) {
+var PoolingLayer = function(poolingFunc, windowSize, stride, pad) {
   this.poolingFunc = poolingFunc;
   this.windowSize = windowSize;
   this.stride = stride;
   this.pad = pad;
 
-  this.outputWidth = Math.floor((inputWidth + 2 * pad - windowSize) / stride + 1);
-  this.outputHeight = Math.floor((inputHeight + 2 * pad - windowSize) / stride + 1);
+  this.inputBlob = null;
+  this.gradMap = Object.create(null);
+};
+
+PoolingLayer.prototype.init = function(inputWidth, inputHeight, inputDepth) {
+  this.outputWidth = Math.floor((inputWidth + 2 * this.pad - this.windowSize) / this.stride + 1);
+  this.outputHeight = Math.floor((inputHeight + 2 * this.pad - this.windowSize) / this.stride + 1);
   this.outputDepth = inputDepth;
 
-  this.inputBlob = null;
   this.blob = new Blob(this.outputWidth, this.outputHeight, this.outputDepth);
-
-  this.gradMap = Object.create(null);
-}
+};
 
 PoolingLayer.prototype.fprop = function(inputBlob) {
   this.inputBlob = inputBlob;
@@ -177,7 +184,13 @@ PoolingLayer.prototype.bprop = function(nextBlob) {
   return this.inputBlob;
 };
 
-var ReLULayer = function(inputWidth, inputHeight=1, inputDepth=1) {
+var ReLULayer = function() {
+};
+
+ReLULayer.prototype.init = function(inputWidth, inputHeight, inputDepth) {
+  this.outputWidth = inputWidth;
+  this.outputHeight = inputHeight;
+  this.outputDepth = inputDepth;
   this.blob = new Blob(inputWidth, inputHeight, inputDepth);
 };
 
@@ -195,34 +208,45 @@ ReLULayer.prototype.bprop = function(nextBlob) {
   return this.blob;
 };
 
-var SigmoidLayer = function(numInput) {
-  this.numInput = numInput;
-  this.numOutput = numInput;
-
-  this.blob = new Blob(1, 1, numInput);
+var SigmoidLayer = function() {
 };
 
+SigmoidLayer.prototype.init = function(inputWidth, inputHeight, inputDepth) {
+  this.outputWidth = inputWidth;
+  this.outputHeight = inputHeight;
+  this.outputDepth = inputDepth;
+  this.blob = new Blob(inputWidth, inputHeight, inputDepth);
+}
+
 SigmoidLayer.prototype.fprop = function(inputBlob) {
-  for (var i = 0; i < this.numInput; i++) {
+  for (var i = 0; i < this.blob.data.length; i++) {
     this.blob.data[i] = 1.0 / (1.0 + Math.exp(-inputBlob.data[i]));
   }
   return this.blob;
 };
 
 SigmoidLayer.prototype.bprop = function(nextBlob) {
-  for (var i = 0; i < this.numInput; i++) {
+  for (var i = 0; i < this.blob.data.length; i++) {
     this.blob.delta[i] = this.blob.data[i] * (1.0 - this.blob.data[i]) * nextBlob.delta[i];
   }
   return this.blob;
 };
 
-var LinearLayer = function(numInput, numOutput, biasFiller) {
-  this.numInput = numInput;
-  this.numOutput = numOutput;
+var LinearLayer = function(numOutput, biasFiller) {
+  this.outputWidth = 1;
+  this.outputHeight = 1;
+  this.outputDepth = numOutput;
+  this.biasFiller = biasFiller;
+
+  this.inputBlob = null;
+};
+
+LinearLayer.prototype.init = function(inputWidth, inputHeight, inputDepth) {
+  this.numInput = inputWidth * inputHeight * inputDepth;
 
   this.blobs = new Array(2);
-  this.biases = this.blobs[0] = new Blob(1, 1, numOutput);
-  this.weights = this.blobs[1] = new Blob(1, 1, numOutput * numInput);
+  this.biases = this.blobs[0] = new Blob(1, 1, this.outputDepth);
+  this.weights = this.blobs[1] = new Blob(1, 1, this.outputDepth * this.numInput);
 
   this.params = new Array(2);
   this.params[0] = {
@@ -232,30 +256,28 @@ var LinearLayer = function(numInput, numOutput, biasFiller) {
     weightDecay: 1,
   };
 
-  for (var i = 0; i < numOutput; i++) {
-    if (biasFiller) {
-      this.biases.data[i] = biasFiller();
+  for (var i = 0; i < this.outputDepth; i++) {
+    if (this.biasFiller) {
+      this.biases.data[i] = this.biasFiller();
     } else {
       this.biases.data[i] = Rand.randn(0, 1);
     }
   }
-  for (var i = 0; i < numOutput * numInput; i++) {
-    this.weights.data[i] = Rand.randn(0, 1.0 / Math.sqrt(numInput));
+  for (var i = 0; i < this.outputDepth * this.numInput; i++) {
+    this.weights.data[i] = Rand.randn(0, 1.0 / Math.sqrt(this.numInput));
   }
 
-  this.inputBlob = null;
-
-  this.blob = new Blob(1, 1, numOutput);
+  this.blob = new Blob(1, 1, this.outputDepth);
 };
 
 LinearLayer.prototype.fprop = function(inputBlob) {
   this.inputBlob = inputBlob;
 
-  for (var i = 0; i < this.numOutput; i++) {
+  for (var i = 0; i < this.outputDepth; i++) {
     this.blob.data[i] = this.biases.data[i];
 
     for (var j = 0; j < this.numInput; j++) {
-      this.blob.data[i] += this.weights.data[i * this.numOutput + j] * inputBlob.data[j];
+      this.blob.data[i] += this.weights.data[i * this.outputDepth + j] * inputBlob.data[j];
     }
   }
 
@@ -265,28 +287,28 @@ LinearLayer.prototype.fprop = function(inputBlob) {
 LinearLayer.prototype.bprop = function(nextBlob) {
   this.inputBlob.delta.fill(0);
 
-  for (var i = 0; i < this.numOutput; i++) {
+  for (var i = 0; i < this.outputDepth; i++) {
     this.biases.delta[i] += nextBlob.delta[i];
   }
 
-  for (var i = 0; i < this.numOutput; i++) {
+  for (var i = 0; i < this.outputDepth; i++) {
     for (var j = 0; j < this.numInput; j++) {
-      this.inputBlob.delta[j] += this.weights.data[i * this.numOutput + j] * nextBlob.delta[i];
-      this.weights.delta[i * this.numOutput + j] += this.inputBlob.data[j] * nextBlob.delta[i];
+      this.inputBlob.delta[j] += this.weights.data[i * this.outputDepth + j] * nextBlob.delta[i];
+      this.weights.delta[i * this.outputDepth + j] += this.inputBlob.data[j] * nextBlob.delta[i];
     }
   }
 
   return this.inputBlob;
 }
 
-var RegressionLayer = function(numInput) {
-  this.numInput = numInput;
-  this.numOutput = numInput;
-
+var RegressionLayer = function() {
   this.inputBlob = null;
 
   this.loss = 0;
 }
+
+RegressionLayer.prototype.init = function(inputWidth, inputHeight, inputDepth) {
+};
 
 RegressionLayer.prototype.fprop = function(inputBlob) {
   this.inputBlob = inputBlob;
@@ -297,7 +319,7 @@ RegressionLayer.prototype.bprop = function(y) {
   this.loss = 0;
 
   if (Array.isArray(y)) {
-    for (var i = 0; i < this.numOutput; i++) {
+    for (var i = 0; i < y.length; i++) {
       this.inputBlob.delta[i] = this.inputBlob.data[i] - y[i];
       this.loss += 0.5 * this.inputBlob.delta[i] * this.inputBlob.delta[i];
     }
@@ -309,33 +331,33 @@ RegressionLayer.prototype.bprop = function(y) {
   return this.inputBlob;
 }
 
-var SoftmaxLayer = function(numInput) {
-  this.numInput = numInput;
-  this.numOutput = numInput;
-
+var SoftmaxLayer = function() {
   this.inputBlob = null;
-  this.blob = new Blob(1, 1, numInput);
 
   this.loss = 0;
 }
+
+SoftmaxLayer.prototype.init = function(inputWidth, inputHeight, inputDepth) {
+  this.blob = new Blob(inputWidth, inputHeight, inputDepth);
+};
 
 SoftmaxLayer.prototype.fprop = function(inputBlob) {
   this.inputBlob = inputBlob;
 
   var max = inputBlob.data[0];
-  for (var i = 1; i < this.numInput; i++) {
+  for (var i = 1; i < inputBlob.data.length; i++) {
     if (max < inputBlob.data[i]) {
       max = inputBlob.data[i];
     }
   }
 
   var expSum = 0;
-  for (var i = 0; i < this.numInput; i++) {
+  for (var i = 0; i < inputBlob.data.length; i++) {
     this.blob.data[i] = Math.exp(inputBlob.data[i] - max);
     expSum += this.blob.data[i];
   }
 
-  for (var i = 0; i < this.numInput; i++) {
+  for (var i = 0; i < inputBlob.data.length; i++) {
     this.blob.data[i] = this.blob.data[i] / expSum;
   }
 
@@ -343,7 +365,7 @@ SoftmaxLayer.prototype.fprop = function(inputBlob) {
 }
 
 SoftmaxLayer.prototype.bprop = function(y) {
-  for (var i = 0; i < this.numOutput; i++) {
+  for (var i = 0; i < this.blob.data.length; i++) {
     this.inputBlob.delta[i] = this.blob.data[i] - (i === y ? 1.0 : 0.0);
   }
 
@@ -352,16 +374,23 @@ SoftmaxLayer.prototype.bprop = function(y) {
   return this.inputBlob;
 }
 
-function Network(layers) {
+function Network(layers, inputWidth, inputHeight, inputDepth) {
   this.layers = layers;
+
+  this.inputWidth = inputWidth;
+  this.inputHeight = inputHeight;
+  this.inputDepth = inputDepth;
+
+  for (var i = 0; i < layers.length; i++) {
+    layers[i].init(inputWidth, inputHeight, inputDepth);
+    inputWidth = layers[i].outputWidth;
+    inputHeight = layers[i].outputHeight;
+    inputDepth = layers[i].outputDepth;
+  }
 }
 
 Network.prototype.fprop = function(input) {
-  /*var x = new Blob(1, 1, input.length);
-  for (var i = 0; i < input.length; i++) {
-    x.data[i] = input[i];
-  }*/
-  var x = new Blob(28, 28, 1);
+  var x = new Blob(this.inputWidth, this.inputHeight, this.inputDepth);
   for (var i = 0; i < input.length; i++) {
     x.data[i] = input[i];
   }
@@ -369,6 +398,7 @@ Network.prototype.fprop = function(input) {
   for (var i = 0; i < this.layers.length; i++) {
     x = this.layers[i].fprop(x);
   }
+
   return x;
 }
 

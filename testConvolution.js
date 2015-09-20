@@ -21,7 +21,8 @@ var testConvolution = (function() {
       }
     }
 
-    var convolutionLayer = new ConvolutionLayer(width, height, depth, outputDepth, windowSize, stride, pad);
+    var convolutionLayer = new ConvolutionLayer(outputDepth, windowSize, stride, pad);
+    convolutionLayer.init(width, height, depth);
 
     for (var num = 0; num < outputDepth; num++) {
       for (var d = 0; d < depth; d++) {

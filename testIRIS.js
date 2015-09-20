@@ -44,12 +44,12 @@ var testIRIS = (function() {
   }
 
   var network = new Network([
-    new LinearLayer(4, 4),
-    new SigmoidLayer(4),
-    new LinearLayer(4, 3),
-    new SigmoidLayer(3),
-    new RegressionLayer(3),
-  ]);
+    new LinearLayer(4),
+    new SigmoidLayer(),
+    new LinearLayer(3),
+    new SigmoidLayer(),
+    new RegressionLayer(),
+  ], 1, 1, 4);
 
   var trainer = new Trainer(network, 40 * trainVectors.length, 1, 0.1, 0.0005);
   trainer.train(trainVectors, trainLabels, testVectors, testLabels);
