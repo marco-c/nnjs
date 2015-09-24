@@ -1,5 +1,5 @@
-mnist_train_images.js
-mnist_train_labels.js
-mnist_test_images.js
-mnist_test_labels.js
+mnist_train_images.json
+mnist_train_labels.json
+mnist_test_images.json
+mnist_test_labels.json
 
