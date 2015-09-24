@@ -1,18 +1,15 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+var assert = require('assert');
 
-'use strict';
+import * as nnjs from '../../nnjs';
 
-load('nnjs.js');
-
-var testConvolution = (function() {
-  function test(name, windowSize, stride, pad, weights, biases, data, expected, expectedDelta) {
+function doTest(name, windowSize, stride, pad, weights, biases, data, expected, expectedDelta) {
+  test(name, function() {
     var outputDepth = weights.length;
     var depth = data.length;
     var width = data[0].length;
     var height = data[0][0].length;
 
-    var blob = new Blob(width, height, depth);
+    var blob = new nnjs.Blob(width, height, depth);
     for (var d = 0; d < depth; d++) {
       for (var x = 0; x < width; x++) {
         for (var y = 0; y < height; y++) {
@@ -21,7 +18,7 @@ var testConvolution = (function() {
       }
     }
 
-    var convolutionLayer = new ConvolutionLayer(outputDepth, windowSize, stride, pad);
+    var convolutionLayer = new nnjs.ConvolutionLayer(outputDepth, windowSize, stride, pad);
     convolutionLayer.init(width, height, depth);
 
     for (var num = 0; num < outputDepth; num++) {
@@ -48,34 +45,21 @@ var testConvolution = (function() {
     var expectedWidth = expected[0].length;
     var expectedHeight = expected[0][0].length;
 
-    if (result.depth != expectedDepth) {
-      console.log("FAIL - testConvolution - fprop -" + name + " wrong depth");
-      return;
-    }
-
-    if (result.width != expectedWidth) {
-      console.log("FAIL - testConvolution - fprop -" + name + " wrong width");
-      return;
-    }
-
-    if (result.height != expectedHeight) {
-      console.log("FAIL - testConvolution - fprop -" + name + " wrong height");
-      return;
-    }
+    assert.equal(result.width, expectedWidth, "fprop - wrong width");
+    assert.equal(result.height, expectedHeight, "fprop - wrong height");
+    assert.equal(result.depth, expectedDepth, "fprop - wrong depth");
 
     for (var d = 0; d < expectedDepth; d++) {
       for (var x = 0; x < expectedWidth; x++) {
         for (var y = 0; y < expectedHeight; y++) {
-          var val = result.data[d * expectedWidth * expectedHeight + x * expectedHeight + y];
-          var exp = expected[d][x][y];
-          if (val != exp) {
-            console.log("FAIL - testConvolution fprop - " + name + " wrong value: " + val + ", expected: " + exp);
-          }
+          assert.equal(result.data[d * expectedWidth * expectedHeight + x * expectedHeight + y],
+                       expected[d][x][y],
+                       "frop - wrong value");
         }
       }
     }
 
-    var nextBlob = new Blob(result.width, result.height, result.depth);
+    var nextBlob = new nnjs.Blob(result.width, result.height, result.depth);
     var i = 0;
     for (var d = 0; d < expectedDepth; d++) {
       for (var x = 0; x < expectedWidth; x++) {
@@ -91,37 +75,26 @@ var testConvolution = (function() {
     var expectedDeltaWidth = expectedDelta[0].length;
     var expectedDeltaHeight = expectedDelta[0][0].length;
 
-    if (thisBlob.depth != expectedDeltaDepth) {
-      console.log("FAIL - testConvolution - bprop - " + name + " wrong depth " + thisBlob.depth + " - " + expectedDeltaDepth);
-      return;
-    }
-
-    if (thisBlob.width != expectedDeltaWidth) {
-      console.log("FAIL - testConvolution - bprop -" + name + " wrong width");
-      return;
-    }
-
-    if (thisBlob.height != expectedDeltaHeight) {
-      console.log("FAIL - testConvolution - bprop -" + name + " wrong height");
-      return;
-    }
+    assert.equal(thisBlob.width, expectedDeltaWidth, "bprop - wrong width");
+    assert.equal(thisBlob.height, expectedDeltaHeight, "bprop - wrong height");
+    assert.equal(thisBlob.depth, expectedDeltaDepth, "bprop - wrong depth");
 
     for (var d = 0; d < depth; d++) {
       for (var x = 0; x < width; x++) {
         for (var y = 0; y < height; y++) {
-          var val = thisBlob.delta[d * width * height + x * height + y];
-          var exp = expectedDelta[d][x][y];
-          if (val != exp) {
-            console.log("FAIL - testConvolution bprop - " + name + " wrong value: " + val + ", expected: " + exp);
-          }
+          assert.equal(thisBlob.delta[d * width * height + x * height + y],
+                       expectedDelta[d][x][y],
+                       "brop - wrong delta");
         }
       }
     }
-  }
+  });
+}
 
+suite('ConvolutionLayer', function() {
   // TODO: Test bprop also for weights and biases
 
-  test("4x4x1,window=2x2,filters=1,stride=2,pad=0", 2, 2, 0,
+  doTest("4x4x1,window=2x2,filters=1,stride=2,pad=0", 2, 2, 0,
     [
       [
         [
@@ -155,7 +128,7 @@ var testConvolution = (function() {
     ]
   );
 
-  test("4x4x2,window=2x2,filters=1,stride=2,pad=0", 2, 2, 0,
+  doTest("4x4x2,window=2x2,filters=1,stride=2,pad=0", 2, 2, 0,
     [
       [
         [
@@ -205,7 +178,7 @@ var testConvolution = (function() {
     ]
   );
 
-  test("4x4x1,window=2x2,filters=2,stride=2,pad=0", 2, 2, 0,
+  doTest("4x4x1,window=2x2,filters=2,stride=2,pad=0", 2, 2, 0,
     [
       [
         [
@@ -249,7 +222,7 @@ var testConvolution = (function() {
     ]
   );
 
-  test("6x6x3,window=3x3,filters=3,stride=2,pad=1", 3, 2, 1,
+  doTest("6x6x3,window=3x3,filters=3,stride=2,pad=1", 3, 2, 1,
     [
       [
         [
@@ -331,4 +304,4 @@ var testConvolution = (function() {
       ]
     ]
   );
-})();
+});

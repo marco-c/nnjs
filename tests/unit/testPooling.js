@@ -1,17 +1,14 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+var assert = require('assert');
 
-'use strict';
+import * as nnjs from '../../nnjs';
 
-load('nnjs.js');
-
-var testPooling = (function() {
-  function test(name, windowSize, stride, pad, data, expected, expectedDelta) {
+function doTest(name, windowSize, stride, pad, data, expected, expectedDelta) {
+  test(name, function() {
     var depth = data.length;
     var width = data[0].length;
     var height = data[0][0].length;
 
-    var blob = new Blob(width, height, depth);
+    var blob = new nnjs.Blob(width, height, depth);
     for (var d = 0; d < depth; d++) {
       for (var x = 0; x < width; x++) {
         for (var y = 0; y < height; y++) {
@@ -20,7 +17,7 @@ var testPooling = (function() {
       }
     }
 
-    var poolingLayer = new PoolingLayer(null, windowSize, stride, pad);
+    var poolingLayer = new nnjs.PoolingLayer(null, windowSize, stride, pad);
     poolingLayer.init(width, height, depth);
     var result = poolingLayer.fprop(blob);
 
@@ -28,31 +25,21 @@ var testPooling = (function() {
     var expectedWidth = expected[0].length;
     var expectedHeight = expected[0][0].length;
 
-    if (result.depth != expectedDepth) {
-      console.log("FAIL - testPooling - " + name + " wrong depth");
-    }
-
-    if (result.width != expectedWidth) {
-      console.log("FAIL - testPooling - " + name + " wrong width");
-    }
-
-    if (result.height != expectedHeight) {
-      console.log("FAIL - testPooling - " + name + " wrong height");
-    }
+    assert.equal(result.width, expectedWidth, "wrong width");
+    assert.equal(result.height, expectedHeight, "wrong height");
+    assert.equal(result.depth, expectedDepth, "wrong depth");
 
     for (var d = 0; d < expectedDepth; d++) {
       for (var x = 0; x < expectedWidth; x++) {
         for (var y = 0; y < expectedHeight; y++) {
-          var val = result.data[d * expectedWidth * expectedHeight + x * expectedHeight + y];
-          var exp = expected[d][x][y];
-          if (val != exp) {
-            console.log("FAIL - testPooling fprop - " + name + " wrong value: " + val + ", expected: " + exp);
-          }
+          assert.equal(result.data[d * expectedWidth * expectedHeight + x * expectedHeight + y],
+                       expected[d][x][y],
+                       "fprop - wrong value");
         }
       }
     }
 
-    var nextBlob = new Blob(result.width, result.height, result.depth);
+    var nextBlob = new nnjs.Blob(result.width, result.height, result.depth);
     var i = 0;
     for (var d = 0; d < expectedDepth; d++) {
       for (var x = 0; x < expectedWidth; x++) {
@@ -66,17 +53,17 @@ var testPooling = (function() {
     for (var d = 0; d < depth; d++) {
       for (var x = 0; x < width; x++) {
         for (var y = 0; y < height; y++) {
-          var val = thisBlob.delta[d * width * height + x * height + y];
-          var exp = expectedDelta[d][x][y];
-          if (val != exp) {
-            console.log("FAIL - testPooling bprop - " + name + " wrong value: " + val + ", expected: " + exp);
-          }
+          assert.equal(thisBlob.delta[d * width * height + x * height + y],
+                       expectedDelta[d][x][y],
+                       "bprop - wrong value");
         }
       }
     }
-  }
+  });
+}
 
-  test("4x4x1,window=2x2,stride=2,pad=0", 2, 2, 0,
+suite('PoolingLayer', function() {
+  doTest("4x4x1,window=2x2,stride=2,pad=0", 2, 2, 0,
     [
       [
         [ 0, 1, 2, 3, ],
@@ -101,7 +88,7 @@ var testPooling = (function() {
     ]
   );
 
-  test("4x4x2,window=2x2,stride=2,pad=0", 2, 2, 0,
+  doTest("4x4x2,window=2x2,stride=2,pad=0", 2, 2, 0,
     [
       [
         [ 0, 1, 2, 3, ],
@@ -142,7 +129,7 @@ var testPooling = (function() {
     ]
   );
 
-  test("5x5x1,window=2x2,stride=3,pad=0", 2, 3, 0,
+  doTest("5x5x1,window=2x2,stride=3,pad=0", 2, 3, 0,
     [
       [
         [ 0, 1, 2, 3, 4, ],
@@ -169,7 +156,7 @@ var testPooling = (function() {
     ]
   );
 
-  test("5x5x1,window=3x3,stride=2,pad=0", 3, 2, 0,
+  doTest("5x5x1,window=3x3,stride=2,pad=0", 3, 2, 0,
     [
       [
         [ 0, 1, 2, 3, 4, ],
@@ -196,7 +183,7 @@ var testPooling = (function() {
     ]
   );
 
-  test("2x2x1,window=2x2,stride=2,pad=1", 2, 2, 1,
+  doTest("2x2x1,window=2x2,stride=2,pad=1", 2, 2, 1,
     [
       [
         [ 5, 6, ],
@@ -216,4 +203,4 @@ var testPooling = (function() {
       ]
     ]
   );
-})();
+});
