@@ -84,7 +84,7 @@ function doTest(name, windowSize, stride, pad, weights, biases, data, expected, 
         for (var y = 0; y < height; y++) {
           assert.equal(thisBlob.delta[d * width * height + x * height + y],
                        expectedDelta[d][x][y],
-                       "brop - wrong delta");
+                       "brop - wrong delta at (" + x + ", " + y + ", " + d + ")");
         }
       }
     }
@@ -222,7 +222,7 @@ suite('ConvolutionLayer', function() {
     ]
   );
 
-  doTest("6x6x3,window=3x3,filters=3,stride=2,pad=1", 3, 2, 1,
+  doTest("6x6x3,window=3x3,filters=2,stride=2,pad=1", 3, 2, 1,
     [
       [
         [
@@ -297,10 +297,25 @@ suite('ConvolutionLayer', function() {
     ],
     [
       [
-        [ 0, 0, 0, 0, ],
-        [ 0, 1, 0, 2, ],
-        [ 0, 3, 0, 0, ],
-        [ 0, 0, 0, 4, ],
+        [ 9, 13, 9, 16, 9, ],
+        [ 27, 0, 30, 0, 33, ],
+        [ 9, 22, 9, 25, 9, ],
+        [ 36, 0, 39, 0, 42, ],
+        [ 9, 31, 9, 34, 9, ],
+      ],
+      [
+        [ 10, 0, 11, 0, 12, ],
+        [ 6, 5, 6, 5, 6, ],
+        [ 13, 0, 14, 0, 15, ],
+        [ 6, 5, 6, 5, 6, ],
+        [ 16, 0, 17, 0, 18, ],
+      ],
+      [
+        [ -10, -1, -11, -2, -12, ],
+        [ -2, 23, -1, 27, 0, ],
+        [ -13, -4, -14, -5, -15, ],
+        [ 1, 35, 2, 39, 3, ],
+        [ -16, -7, -17, -8, -18, ],
       ]
     ]
   );
