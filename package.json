@@ -23,6 +23,7 @@
     "url": "https://github.com/marco-c/nnjs/issues"
   },
   "devDependencies": {
+    "babel": "^5.8.23",
     "babelify": "~6.3.0"
   }
 }
