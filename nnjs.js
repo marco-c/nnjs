@@ -202,7 +202,6 @@ ConvolutionLayer.prototype.bprop = function(nextBlob) {
                                 (y - startY);
                 var inputIdx = id * this.inputBlob.width * this.inputBlob.height + x * this.inputBlob.height + y;
 
-
                 this.weights.delta[weightIdx] += this.inputBlob.data[inputIdx] * nextBlob.delta[outputIdx];
                 this.inputBlob.delta[inputIdx] += this.weights.data[weightIdx] * nextBlob.delta[outputIdx];
               }
@@ -324,6 +323,30 @@ SigmoidLayer.prototype.fprop = function(inputBlob) {
 SigmoidLayer.prototype.bprop = function(nextBlob) {
   for (var i = 0; i < this.blob.data.length; i++) {
     this.blob.delta[i] = this.blob.data[i] * (1.0 - this.blob.data[i]) * nextBlob.delta[i];
+  }
+  return this.blob;
+};
+
+var TanhLayer = function() {
+}
+
+TanhLayer.prototype.init = function(inputWidth, inputHeight, inputDepth) {
+  this.outputWidth = inputWidth;
+  this.outputHeight = inputHeight;
+  this.outputDepth = inputDepth;
+  this.blob = new Blob(inputWidth, inputHeight, inputDepth);
+}
+
+TanhLayer.prototype.fprop = function(inputBlob) {
+  for (var i = 0; i < this.blob.data.length; i++) {
+    this.blob.data[i] = Math.tanh(inputBlob.data[i]);
+  }
+  return this.blob;
+};
+
+TanhLayer.prototype.bprop = function(nextBlob) {
+  for (var i = 0; i < this.blob.data.length; i++) {
+    this.blob.delta[i] = (1.0 - this.blob.data[i] * this.blob.data[i]) * nextBlob.delta[i];
   }
   return this.blob;
 };
@@ -598,5 +621,6 @@ Trainer.prototype.test = function(testVectors, testLabels) {
   return correct / testVectors.length;
 };
 
-export default { Blob, ConvolutionLayer, PoolingLayer, ReLULayer, SigmoidLayer, LinearLayer,
-                 RegressionLayer, SoftmaxLayer, Network, Trainer };
+export default { Blob, ConvolutionLayer, PoolingLayer, ReLULayer, SigmoidLayer,
+                 TanhLayer, LinearLayer, RegressionLayer, SoftmaxLayer, Network,
+                 Trainer };
