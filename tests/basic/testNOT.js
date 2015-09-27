@@ -37,6 +37,14 @@ suite('Learn NOT', function() {
     ], 2000);
   });
 
+  test('Single layer network with tanh', function() {
+    doTest([
+      new nnjs.LinearLayer(1),
+      new nnjs.TanhLayer(),
+      new nnjs.RegressionLayer(),
+    ], 1000);
+  });
+
   test('Two layer network', function() {
     doTest([
       new nnjs.LinearLayer(1),
