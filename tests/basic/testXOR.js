@@ -27,7 +27,7 @@ suite('Learn XOR', function() {
 
   test('Two layer network', function() {
     doTest([
-      new nnjs.LinearLayer(2),
+      new nnjs.LinearLayer(3),
       new nnjs.SigmoidLayer(),
       new nnjs.LinearLayer(1),
       new nnjs.SigmoidLayer(),
@@ -37,7 +37,7 @@ suite('Learn XOR', function() {
 
   test('Two layer network with momentum', function() {
     doTest([
-      new nnjs.LinearLayer(2),
+      new nnjs.LinearLayer(3),
       new nnjs.SigmoidLayer(),
       new nnjs.LinearLayer(1),
       new nnjs.SigmoidLayer(),
