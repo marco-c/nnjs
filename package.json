@@ -7,6 +7,7 @@
     "build-browser": "mkdir -p dist-browser && browserify nnjs.js -t babelify --outfile dist-browser/nnjs.js",
     "build-node": "mkdir -p dist && babel nnjs.js > dist/nnjs.js && babel rand.js > dist/rand.js && babel util.js > dist/util.js",
     "clean": "rm -rf dist",
+    "pretest": "npm run build-node",
     "test": "mocha --ui tdd --compilers js:babel/register"
   },
   "repository": {
