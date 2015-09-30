@@ -1,8 +1,8 @@
 {
   "name": "nnjs",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Neural Network library in JavaScript",
-  "main": "nnjs.js",
+  "main": "dist/nnjs.js",
   "scripts": {
     "build-browser": "mkdir -p dist-browser && browserify nnjs.js -t babelify --outfile dist-browser/nnjs.js",
     "build-node": "mkdir -p dist && babel nnjs.js > dist/nnjs.js && babel rand.js > dist/rand.js && babel util.js > dist/util.js",
@@ -27,5 +27,10 @@
   "devDependencies": {
     "babel": "^5.8.23",
     "babelify": "~6.3.0"
-  }
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ]
 }
