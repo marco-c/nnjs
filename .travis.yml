@@ -8,7 +8,7 @@ before_script:
 script:
   - npm test tests/unit/
   - npm test tests/basic/
-  - npm run build
+  - npm run build-browser
   - npm run clean
 sudo: false
 cache:
