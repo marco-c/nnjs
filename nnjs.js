@@ -396,7 +396,7 @@ LinearLayer.prototype.fprop = function(inputBlob) {
     this.blob.data[i] = this.biases.data[i];
 
     for (var j = 0; j < this.numInput; j++) {
-      this.blob.data[i] += this.weights.data[i * this.outputDepth + j] * inputBlob.data[j];
+      this.blob.data[i] += this.weights.data[i * this.numInput + j] * inputBlob.data[j];
     }
   }
 
@@ -412,8 +412,8 @@ LinearLayer.prototype.bprop = function(nextBlob) {
 
   for (var i = 0; i < this.outputDepth; i++) {
     for (var j = 0; j < this.numInput; j++) {
-      this.inputBlob.delta[j] += this.weights.data[i * this.outputDepth + j] * nextBlob.delta[i];
-      this.weights.delta[i * this.outputDepth + j] += this.inputBlob.data[j] * nextBlob.delta[i];
+      this.inputBlob.delta[j] += this.weights.data[i * this.numInput + j] * nextBlob.delta[i];
+      this.weights.delta[i * this.numInput + j] += this.inputBlob.data[j] * nextBlob.delta[i];
     }
   }
 
