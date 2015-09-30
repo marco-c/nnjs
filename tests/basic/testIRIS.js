@@ -55,6 +55,6 @@ suite('IRIS', function() {
     trainer.train(trainVectors, trainLabels, testVectors, testLabels);
 
     var accuracy = trainer.test(testVectors, testLabels);
-    assert(accuracy > 0.6, "Iris classification accuracy > 60%");
+    assert(accuracy > 0.6, "Iris classification accuracy (" + (accuracy * 100) + "%) > 60%");
   });
 });
